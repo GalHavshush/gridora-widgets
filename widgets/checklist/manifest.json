@@ -1,0 +1,24 @@
+{
+  "id": "checklist",
+  "name": "Checklist",
+  "description": "A to-do list you can tick off right on the dashboard.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "defaultSize": { "w": 3, "h": 3 },
+  "minSize": { "w": 2, "h": 2 },
+  "settings": [
+    { "key": "title", "label": "Title", "type": "text", "default": "To do" },
+    {
+      "key": "items",
+      "label": "Items",
+      "type": "list",
+      "itemLabel": "item",
+      "fields": [
+        { "key": "text", "label": "Text", "type": "text", "placeholder": "Something to do" },
+        { "key": "done", "label": "Done", "type": "toggle" }
+      ],
+      "default": []
+    },
+    { "key": "hideDone", "label": "Hide finished items", "type": "toggle", "default": false }
+  ]
+}
