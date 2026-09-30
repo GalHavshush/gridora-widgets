@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIF Roulette</title>
+    <script src="../../gridora.js"></script>
+    <style>
+      body { position: relative; overflow: hidden; cursor: pointer; user-select: none; }
+      img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+      .caption { position: absolute; inset: auto 0 0; padding: 24px 12px 10px; font-size: clamp(11px, 6vmin, 16px);
+                 font-weight: 600; text-align: center; color: #fff; background: linear-gradient(transparent, rgb(0 0 0 / .6)); }
+      .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body title="Click for another GIF">
+    <div class="loading" id="loading">Summoning a GIF…</div>
+    <img id="gif" alt="A random GIF" hidden />
+    <div class="caption" id="caption" hidden></div>
+    <script>
+      const $ = (id) => document.getElementById(id)
+      const captions = [
+        'Me, pretending to work',
+        'Monday, in GIF form',
+        'This is fine',
+        'Mood',
+        'When the build passes first try',
+        'Deploying on a Friday',
+        'Reading the docs',
+        'Me after one more coffee',
+        'Certified bruh moment',
+        '10/10 would click again',
+      ]
+      const pick = (list) => list[Math.floor(Math.random() * list.length)]
+      let settings = {}
+      let timer
+      let fails = 0
+      let editing = false
+
+      function shuffle() {
+        const own = (Array.isArray(settings.gifs) ? settings.gifs : []).map((g) => g?.url).filter(Boolean)
+        // Cache-bust so the cat service hands out a new cat each time.
+        const url = own.length ? pick(own) : `https://cataas.com/cat/gif?t=${Date.now()}`
+        $('loading').hidden = false
+        $('gif').src = url
+      }
+
+      $('gif').onload = () => {
+        fails = 0
+        $('loading').hidden = true
+        $('gif').hidden = false
+        $('caption').textContent = pick(captions)
+        $('caption').hidden = settings.caption === false
+      }
+      $('gif').onerror = () => {
+        // A dead link gets skipped, but don't spin forever if everything is down.
+        if (++fails < 3) return shuffle()
+        $('gif').hidden = true
+        $('caption').hidden = true
+        $('loading').hidden = false
+        $('loading').textContent = 'No GIFs today. Click to retry.'
+      }
+      document.body.onclick = () => {
+        if (editing) return
+        fails = 0
+        $('loading').textContent = 'Summoning a GIF…'
+        shuffle()
+      }
+
+      Gridora.onState((state) => {
+        const prev = settings
+        settings = state.settings
+        editing = state.isEditing
+        const same = (key) => JSON.stringify(prev[key]) === JSON.stringify(settings[key])
+        if (!$('gif').src || !same('gifs')) shuffle()
+        else $('caption').hidden = settings.caption === false || $('gif').hidden
+        // State is re-sent on resize and theme changes too, so only restart the timer when it changed.
+        if (same('every') && timer !== undefined) return
+        clearInterval(timer)
+        timer = Number(settings.every) > 0 ? setInterval(shuffle, settings.every * 60_000) : null
+      })
+    </script>
+  </body>
+</html>
