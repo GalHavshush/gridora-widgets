@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Timer</title>
+    <script src="../../gridora.js"></script>
+    <style>
+      body { display: flex; flex-direction: column; justify-content: center; padding: 20px; }
+      .mode { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+      .mode.break { color: var(--accent); }
+      .time { margin-top: 4px; font-size: clamp(32px, 26vmin, 96px); font-weight: 600; line-height: 1;
+              letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+      .actions { display: flex; gap: 6px; margin-top: 12px; }
+      button { padding: 6px 12px; border: 0; border-radius: 999px; background: var(--subtle); color: var(--fg);
+               font: inherit; font-size: 12px; cursor: pointer; }
+      button.primary { background: var(--accent); color: #fff; }
+    </style>
+  </head>
+  <body>
+    <div class="mode" id="mode"></div>
+    <div class="time" id="time"></div>
+    <div class="actions">
+      <button class="primary" id="toggle"></button>
+      <button id="reset">Reset</button>
+    </div>
+    <script>
+      const $ = (id) => document.getElementById(id)
+      let settings = {}
+      let mode = 'focus'
+      let endsAt = null // wall-clock end while running, so throttled timers don't drift
+      let left = null // ms left while paused; null = full length
+
+      const length = () => Math.max(1, Number(settings[mode]) || (mode === 'focus' ? 25 : 5)) * 60_000
+      const remaining = () => (endsAt ? endsAt - Date.now() : (left ?? length()))
+
+      function render() {
+        let ms = remaining()
+        if (ms <= 0) {
+          mode = mode === 'focus' ? 'break' : 'focus'
+          endsAt = Date.now() + length()
+          ms = length()
+        }
+        const s = Math.ceil(ms / 1000)
+        const clock = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+        $('time').textContent = clock
+        $('mode').textContent = mode === 'focus' ? 'Focus' : 'Break'
+        $('mode').className = `mode ${mode}`
+        $('toggle').textContent = endsAt ? 'Pause' : left ? 'Resume' : 'Start'
+        document.title = endsAt ? `${clock} · ${mode}` : 'Focus Timer'
+      }
+
+      $('toggle').onclick = () => {
+        if (endsAt) [left, endsAt] = [endsAt - Date.now(), null]
+        else [endsAt, left] = [Date.now() + remaining(), null]
+        render()
+      }
+      $('reset').onclick = () => {
+        ;[mode, endsAt, left] = ['focus', null, null]
+        render()
+      }
+      Gridora.onState((state) => {
+        settings = state.settings
+        render()
+      })
+      setInterval(render, 250)
+    </script>
+  </body>
+</html>

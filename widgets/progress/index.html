@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Progress</title>
+    <script src="../../gridora.js"></script>
+    <style>
+      body { display: flex; flex-direction: column; justify-content: center; gap: clamp(6px, 4vmin, 14px); padding: 16px 20px; }
+      .row { display: grid; grid-template-columns: 1fr auto; row-gap: 4px; font-size: 12px; }
+      .name { font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-size: 11px; }
+      .pct { font-variant-numeric: tabular-nums; }
+      .bar { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--subtle); overflow: hidden; }
+      .bar div { height: 100%; border-radius: inherit; background: var(--accent); }
+      button { align-self: flex-start; padding: 6px 12px; border: 0; border-radius: 999px;
+               background: var(--subtle); color: var(--fg); font: inherit; font-size: 12px; cursor: pointer; }
+      #rows { display: contents; }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="rows"></div>
+    <button id="set" hidden>Pick what to track</button>
+    <script>
+      const $ = (id) => document.getElementById(id)
+      let settings = {}
+
+      // [start, end) of each period in local time, so days flip at the user's midnight.
+      function span(period, now) {
+        const [y, m, d] = [now.getFullYear(), now.getMonth(), now.getDate()]
+        if (period === 'day') return [new Date(y, m, d), new Date(y, m, d + 1)]
+        if (period === 'month') return [new Date(y, m, 1), new Date(y, m + 1, 1)]
+        if (period === 'year') return [new Date(y, 0, 1), new Date(y + 1, 0, 1)]
+        const back = (now.getDay() - (settings.mondayFirst === false ? 0 : 1) + 7) % 7
+        return [new Date(y, m, d - back), new Date(y, m, d - back + 7)]
+      }
+
+      function render() {
+        const now = new Date()
+        const rows = ['day', 'week', 'month', 'year'].filter((p) => settings[p] !== false).map((period) => {
+          const [start, end] = span(period, now)
+          const pct = (100 * (now - start)) / (end - start)
+          const row = document.createElement('div')
+          row.className = 'row'
+          row.innerHTML = `<span class="name">${period}</span><span class="pct">${Math.floor(pct)}%</span>
+                           <div class="bar"><div style="width:${pct.toFixed(2)}%"></div></div>`
+          return row
+        })
+        $('rows').replaceChildren(...rows)
+        $('set').hidden = rows.length > 0
+      }
+
+      $('set').onclick = () => Gridora.openSettings()
+      Gridora.onState((state) => {
+        settings = state.settings
+        render()
+      })
+      setInterval(render, 60_000)
+    </script>
+  </body>
+</html>

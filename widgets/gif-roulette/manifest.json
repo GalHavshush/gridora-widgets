@@ -1,0 +1,22 @@
+{
+  "id": "gif-roulette",
+  "name": "GIF Roulette",
+  "description": "A random GIF. Click for another. Productivity not included.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "defaultSize": { "w": 2, "h": 2 },
+  "minSize": { "w": 2, "h": 2 },
+  "settings": [
+    {
+      "key": "gifs",
+      "label": "Your GIFs",
+      "description": "Leave empty for random cat GIFs.",
+      "type": "list",
+      "itemLabel": "GIF",
+      "fields": [{ "key": "url", "label": "GIF URL", "type": "url", "placeholder": "https://…/party.gif" }],
+      "default": []
+    },
+    { "key": "every", "label": "Shuffle every (minutes)", "type": "number", "default": 0, "min": 0, "max": 1440, "description": "0 turns auto-shuffle off." },
+    { "key": "caption", "label": "Silly captions", "type": "toggle", "default": true }
+  ]
+}

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checklist</title>
+    <script src="../../gridora.js"></script>
+    <style>
+      body { display: flex; flex-direction: column; padding: 16px 20px; }
+      .head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+      .title { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+      .count { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+      ul { flex: 1; min-height: 0; margin: 8px 0; padding: 0; list-style: none; overflow-y: auto; }
+      li { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+      li label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; cursor: pointer; overflow-wrap: anywhere; }
+      li.done span { color: var(--muted); text-decoration: line-through; }
+      input[type='checkbox'] { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+      .remove { border: 0; background: none; color: var(--muted); font: inherit; font-size: 16px; line-height: 1;
+                cursor: pointer; opacity: 0; }
+      li:hover .remove, .remove:focus-visible { opacity: 1; }
+      .empty { flex: 1; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+      form input { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px;
+                   background: var(--subtle); color: var(--fg); font: inherit; font-size: 13px; outline: none; }
+      form input::placeholder { color: var(--muted); }
+      form input:focus { border-color: var(--accent); }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="head"><div class="title" id="title"></div><div class="count" id="count"></div></div>
+    <ul id="list"></ul>
+    <div class="empty" id="empty">Nothing to do. Nice.</div>
+    <form id="add"><input id="text" placeholder="Add an item…" aria-label="New item" autocomplete="off" /></form>
+    <script>
+      const $ = (id) => document.getElementById(id)
+      let settings = {}
+      const items = () => (Array.isArray(settings.items) ? settings.items : [])
+      const save = (next) => {
+        settings = { ...settings, items: next }
+        render() // optimistic, the host echoes the same state back
+        Gridora.updateSettings({ items: next })
+      }
+
+      function render() {
+        $('title').textContent = settings.title || 'To do'
+        const all = items()
+        const done = all.filter((item) => item.done).length
+        $('count').textContent = all.length ? `${done}/${all.length}` : ''
+        $('list').replaceChildren(
+          ...all.flatMap((item, i) => {
+            if (settings.hideDone && item.done) return []
+            const li = document.createElement('li')
+            li.className = item.done ? 'done' : ''
+            const label = document.createElement('label')
+            const box = document.createElement('input')
+            box.type = 'checkbox'
+            box.checked = Boolean(item.done)
+            box.onchange = () => save(all.map((it, j) => (j === i ? { ...it, done: box.checked } : it)))
+            const text = document.createElement('span')
+            text.textContent = item.text || ''
+            label.append(box, text)
+            const remove = document.createElement('button')
+            remove.className = 'remove'
+            remove.textContent = '×'
+            remove.setAttribute('aria-label', `Remove ${item.text || 'item'}`)
+            remove.onclick = () => save(all.filter((_, j) => j !== i))
+            li.append(label, remove)
+            return [li]
+          }),
+        )
+        const empty = !$('list').children.length
+        $('list').hidden = empty
+        $('empty').hidden = !empty
+        $('empty').textContent = all.length ? 'All done. Nice.' : 'Nothing to do yet.'
+      }
+
+      $('add').onsubmit = (e) => {
+        e.preventDefault()
+        const text = $('text').value.trim()
+        if (!text) return
+        $('text').value = ''
+        save([...items(), { text, done: false }])
+      }
+      Gridora.onState((state) => {
+        settings = state.settings
+        render()
+      })
+    </script>
+  </body>
+</html>

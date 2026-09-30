@@ -1,0 +1,16 @@
+{
+  "id": "progress",
+  "name": "Progress",
+  "description": "How much of the day, week, month and year is already gone.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "defaultSize": { "w": 3, "h": 2 },
+  "minSize": { "w": 2, "h": 2 },
+  "settings": [
+    { "key": "day", "label": "Day", "type": "toggle", "default": true },
+    { "key": "week", "label": "Week", "type": "toggle", "default": true },
+    { "key": "month", "label": "Month", "type": "toggle", "default": true },
+    { "key": "year", "label": "Year", "type": "toggle", "default": true },
+    { "key": "mondayFirst", "label": "Weeks start on Monday", "type": "toggle", "default": true }
+  ]
+}
