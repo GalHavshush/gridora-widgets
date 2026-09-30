@@ -33,13 +33,20 @@
 
       const length = () => Math.max(1, Number(settings[mode]) || (mode === 'focus' ? 25 : 5)) * 60_000
       const remaining = () => (endsAt ? endsAt - Date.now() : (left ?? length()))
+      // Kept in settings (not shown in the drawer) so a refresh picks up where the timer was.
+      const snapshot = () => JSON.stringify({ mode, endsAt, left })
+      const save = () => Gridora.updateSettings({ timer: JSON.parse(snapshot()) })
 
       function render() {
         let ms = remaining()
         if (ms <= 0) {
-          mode = mode === 'focus' ? 'break' : 'focus'
-          endsAt = Date.now() + length()
-          ms = length()
+          // Catch up on every phase that ended while the page was closed.
+          while (ms <= 0) {
+            mode = mode === 'focus' ? 'break' : 'focus'
+            endsAt += length()
+            ms = remaining()
+          }
+          save()
         }
         const s = Math.ceil(ms / 1000)
         const clock = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -53,14 +60,18 @@
       $('toggle').onclick = () => {
         if (endsAt) [left, endsAt] = [endsAt - Date.now(), null]
         else [endsAt, left] = [Date.now() + remaining(), null]
+        save()
         render()
       }
       $('reset').onclick = () => {
         ;[mode, endsAt, left] = ['focus', null, null]
+        save()
         render()
       }
       Gridora.onState((state) => {
         settings = state.settings
+        const saved = settings.timer
+        if (saved && JSON.stringify(saved) !== snapshot()) ({ mode, endsAt, left } = saved)
         render()
       })
       setInterval(render, 250)
