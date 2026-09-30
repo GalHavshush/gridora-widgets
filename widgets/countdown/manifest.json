@@ -1,0 +1,13 @@
+{
+  "id": "countdown",
+  "name": "Countdown",
+  "description": "Days left until a date that matters.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "defaultSize": { "w": 3, "h": 2 },
+  "minSize": { "w": 2, "h": 2 },
+  "settings": [
+    { "key": "title", "label": "Title", "type": "text", "default": "Countdown" },
+    { "key": "date", "label": "Date", "type": "text", "placeholder": "2026-12-31", "description": "Year-month-day." }
+  ]
+}
